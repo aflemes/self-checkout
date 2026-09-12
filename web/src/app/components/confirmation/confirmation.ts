@@ -1,6 +1,6 @@
 import { Component, input, output } from '@angular/core';
-import { formatBRL } from '../core/format';
-import { OrderResult } from '../models/order';
+import { formatBRL } from '../../core/format';
+import { OrderResult } from '../../models/order';
 
 @Component({
   selector: 'app-confirmation',

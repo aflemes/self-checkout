@@ -1,7 +1,7 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
-import { Menu } from '../models/menu';
-import { CartService } from '../core/cart.service';
-import { formatBRL } from '../core/format';
+import { Menu } from '../../models/menu';
+import { CartService } from '../../core/cart.service';
+import { formatBRL } from '../../core/format';
 
 const categoryEmoji: Record<number, string> = {
   1: '🌭',

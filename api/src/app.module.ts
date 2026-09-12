@@ -1,30 +1,33 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AppConfigModule } from './modules/config/config.module';
+import { AppConfigService } from './modules/config/config.service';
 import { HealthController } from './health.controller';
 import { MenuModule } from './modules/menu/menu.module';
 import { OrdersModule } from './modules/orders/orders.module';
+import { StripeModule } from './modules/stripe/stripe.module';
+import { StripeWebhookModule } from './modules/stripe-webhook/stripe-webhook.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    AppConfigModule,
     TypeOrmModule.forRootAsync({
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
+      inject: [AppConfigService],
+      useFactory: (config: AppConfigService) => ({
         type: 'mysql',
-        host: config.get('MYSQL_HOST', 'localhost'),
-        port: Number(config.get('MYSQL_PORT', '3306')),
-        username: config.get('MYSQL_USER', 'checkout'),
-        password: config.getOrThrow('MYSQL_PASSWORD'),
-        database: config.get('MYSQL_DATABASE', 'self_checkout'),
+        ...config.database,
         charset: 'utf8mb4',
         autoLoadEntities: true,
         synchronize: false,
         timezone: 'Z',
       }),
     }),
+    StripeModule,
     MenuModule,
     OrdersModule,
+    StripeWebhookModule,
   ],
   controllers: [HealthController],
 })

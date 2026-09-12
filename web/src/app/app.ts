@@ -5,12 +5,12 @@ import { InactivityService } from './core/inactivity.service';
 import { MenuService } from './core/menu.service';
 import { SupportService } from './core/support.service';
 import { OrderResult } from './models/order';
-import { MenuGridComponent } from './components/menu-grid';
-import { OrderRailComponent } from './components/order-rail';
-import { CheckoutComponent } from './components/checkout';
-import { ConfirmationComponent } from './components/confirmation';
-import { HelpPanelComponent } from './components/help-panel';
-import { InactivityComponent } from './components/inactivity';
+import { MenuGridComponent } from './components/menu-grid/menu-grid';
+import { OrderRailComponent } from './components/order-rail/order-rail';
+import { CheckoutComponent } from './components/checkout/checkout';
+import { ConfirmationComponent } from './components/confirmation/confirmation';
+import { HelpPanelComponent } from './components/help-panel/help-panel';
+import { InactivityComponent } from './components/inactivity/inactivity';
 
 @Component({
   selector: 'app-root',

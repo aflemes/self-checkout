@@ -1,6 +1,6 @@
 import { MenuProduct } from './menu';
 
-export type PaymentMethod = 'CARD' | 'PIX';
+export type PaymentMethod = 'CARD';
 
 export interface CartItem {
   productId: string;
@@ -37,4 +37,5 @@ export interface OrderResult {
   createdAt: string;
   items: OrderLine[];
   replayed: boolean;
+  clientSecret: string | null;
 }

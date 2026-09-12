@@ -29,6 +29,9 @@ services:
       MYSQL_USER: ${MYSQL_USER:-checkout}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:?MYSQL_PASSWORD must be set in .env}
       API_PORT: 3000
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:8088}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
     ports:
       - "3000:3000"
     depends_on:
@@ -43,8 +46,19 @@ services:
     environment:
       INACTIVITY_TIMEOUT_SECONDS: ${INACTIVITY_TIMEOUT_SECONDS:-120}
       INACTIVITY_WARNING_SECONDS: ${INACTIVITY_WARNING_SECONDS:-15}
+      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-}
     ports:
       - "8088:80"
+    depends_on:
+      - api
+
+  stripe-cli:
+    image: stripe/stripe-cli:latest
+    restart: unless-stopped
+    environment:
+      STRIPE_API_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_API_ID: ${STRIPE_ACCOUNT_ID:-}
+    command: listen --forward-to http://api:3000/api/webhooks/stripe
     depends_on:
       - api
 

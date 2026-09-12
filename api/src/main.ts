@@ -1,13 +1,16 @@
 import { NestFactory } from '@nestjs/core';
 import { BadRequestException, ValidationPipe } from '@nestjs/common';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { flattenValidationErrors } from './common/validation-errors';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    rawBody: true,
+  });
   app.setGlobalPrefix('api');
-  app.enableCors({ origin: process.env.CORS_ORIGIN ?? true });
+  app.enableCors({ origin: process.env.CORS_ORIGIN ?? 'http://localhost:8088' });
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

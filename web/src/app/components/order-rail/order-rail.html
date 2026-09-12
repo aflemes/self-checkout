@@ -37,10 +37,7 @@
                     <button class="step" aria-label="Add" (click)="cart.add(line.productId)">
                       +
                     </button>
-                  </div>
-                  <button class="remove" aria-label="Remove item" (click)="cart.remove(line.productId)">
-                    ✕
-                  </button>
+                  </div>                  
                 } @else {
                   <button class="app-button app-button--danger remove-big" (click)="cart.remove(line.productId)">
                     Remove

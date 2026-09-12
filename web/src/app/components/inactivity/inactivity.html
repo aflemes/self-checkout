@@ -1,0 +1,14 @@
+<div class="overlay">
+  <div class="dialog app-card">
+    <div class="dialog__hand">👋</div>
+    <h2 class="dialog__title">Are you still there?</h2>
+    <p class="dialog__text">
+      Your order will be cleared in
+      <span class="dialog__count amount">{{ inactivity.warningCountdown() }}</span>
+      seconds.
+    </p>
+    <button class="app-button app-button--primary dialog__continue" (click)="continue.emit()">
+      Continue my order
+    </button>
+  </div>
+</div>

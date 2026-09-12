@@ -1,0 +1,130 @@
+<div class="overlay" (click)="cancel()">
+  <div class="dialog app-card" (click)="$event.stopPropagation()">
+    <button
+      class="dialog__close"
+      aria-label="Close"
+      [disabled]="submitting() || paying()"
+      (click)="cancel()"
+    >
+      ✕
+    </button>
+
+    @if (step() === 'summary') {
+      <h2 class="dialog__title">Confirm order</h2>
+
+      <div class="dialog__lines">
+        @for (line of payableLines(); track line.productId) {
+          <div class="dialog__line">
+            <span class="dialog__qty">{{ line.quantity }}×</span>
+            <span class="dialog__name">{{ line.product?.name }}</span>
+            <span class="dialog__amount amount">
+              {{ formatBRL(unitCents(line.product) * line.quantity) }}
+            </span>
+          </div>
+        }
+      </div>
+
+      <div class="dialog__total">
+        <span>Total</span>
+        <span class="amount">{{ formatBRL(cart.totalCents()) }}</span>
+      </div>
+
+      <div class="pay-methods">
+        <button
+          class="pay-method pay-method--active"
+          (click)="method.set('CARD')"
+        >
+          <span class="pay-method__icon">💳</span>
+          <span>Card</span>
+        </button>
+      </div>
+
+      @if (error()) {
+        <div class="banner banner--error">{{ error() }}</div>
+      }
+
+      <div class="dialog__actions">
+        <button
+          class="app-button app-button--secondary"
+          [disabled]="submitting()"
+          (click)="requestCancel()"
+        >
+          Cancel order
+        </button>
+        <button
+          class="app-button app-button--primary confirm"
+          [disabled]="submitting() || payableLines().length === 0"
+          (click)="submit()"
+        >
+          @if (submitting()) {
+            <span class="spinner"></span>
+            <span>Processing…</span>
+          } @else {
+            <span>Confirm order</span>
+          }
+        </button>
+      </div>
+    } @else {
+      <h2 class="dialog__title">Pay</h2>
+
+      <div class="dialog__total">
+        <span>Total</span>
+        <span class="amount">{{ formatBRL(cart.totalCents()) }}</span>
+      </div>
+
+      <div #stripeMount class="stripe-mount"></div>
+
+      @if (payError()) {
+        <div class="banner banner--error">{{ payError() }}</div>
+      }
+
+      <div class="dialog__actions">
+        <button
+          class="app-button app-button--secondary"
+          [disabled]="paying()"
+          (click)="cancel()"
+        >
+          Back
+        </button>
+        <button
+          class="app-button app-button--primary confirm"
+          [disabled]="paying()"
+          (click)="pay()"
+        >
+          @if (paying()) {
+            <span class="spinner"></span>
+            <span>Processing…</span>
+          } @else {
+            <span>Pay now</span>
+          }
+        </button>
+      </div>
+    }
+
+    @if (confirmCancel()) {
+      <div class="confirm-overlay" (click)="dismissCancel()">
+        <div class="confirm-box app-card" (click)="$event.stopPropagation()">
+          <h2 class="confirm-box__title">Cancel this order?</h2>
+          <p class="confirm-box__text">
+            Your order has not been placed yet. If you cancel, the checkout will
+            close and the items will be removed from your cart.
+          </p>
+          <div class="dialog__actions">
+            <button
+              class="app-button app-button--secondary"
+              (click)="dismissCancel()"
+            >
+              Keep ordering
+            </button>
+            <button
+              class="app-button app-button--danger"
+              (click)="confirmCancelOrder()"
+            >
+              Cancel order
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>

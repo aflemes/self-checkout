@@ -5,11 +5,13 @@ import { firstValueFrom } from 'rxjs';
 export interface AppConfig {
   inactivityTimeoutSeconds: number;
   inactivityWarningSeconds: number;
+  stripePublishableKey: string;
 }
 
 const defaults: AppConfig = {
   inactivityTimeoutSeconds: 120,
   inactivityWarningSeconds: 15,
+  stripePublishableKey: '',
 };
 
 @Injectable({ providedIn: 'root' })
@@ -24,6 +26,7 @@ export class ConfigService {
       this.config = {
         inactivityTimeoutSeconds: Number(remote.inactivityTimeoutSeconds ?? defaults.inactivityTimeoutSeconds),
         inactivityWarningSeconds: Number(remote.inactivityWarningSeconds ?? defaults.inactivityWarningSeconds),
+        stripePublishableKey: remote.stripePublishableKey ?? '',
       };
     } catch {
       this.config = defaults;

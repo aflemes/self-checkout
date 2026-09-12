@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { SupportService, SupportTopic } from '../core/support.service';
+import { SupportService, SupportTopic } from '../../core/support.service';
 
 @Component({
   selector: 'app-help-panel',

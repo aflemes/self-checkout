@@ -1,5 +1,5 @@
 import { Component, inject, output } from '@angular/core';
-import { InactivityService } from '../core/inactivity.service';
+import { InactivityService } from '../../core/inactivity.service';
 
 @Component({
   selector: 'app-inactivity',

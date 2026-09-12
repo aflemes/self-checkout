@@ -1,6 +1,6 @@
 import { Component, computed, inject, output } from '@angular/core';
-import { CartService } from '../core/cart.service';
-import { formatBRL } from '../core/format';
+import { CartService } from '../../core/cart.service';
+import { formatBRL } from '../../core/format';
 
 @Component({
   selector: 'app-order-rail',

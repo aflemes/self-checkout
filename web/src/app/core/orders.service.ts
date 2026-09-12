@@ -10,4 +10,8 @@ export class OrdersService {
   async create(payload: CreateOrderPayload): Promise<OrderResult> {
     return firstValueFrom(this.http.post<OrderResult>('/api/orders', payload));
   }
+
+  async getStatus(orderId: string): Promise<{ orderId: string; status: string }> {
+    return firstValueFrom(this.http.get<{ orderId: string; status: string }>(`/api/orders/${orderId}/status`));
+  }
 }
