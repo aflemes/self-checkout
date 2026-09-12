@@ -1,0 +1,146 @@
+.rail {
+  position: sticky;
+  top: 18px;
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 200px;
+}
+
+.rail__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rail__title {
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.rail__count {
+  background: var(--brand);
+  color: #fff;
+  border-radius: 999px;
+  min-width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 14px;
+  padding: 0 8px;
+}
+
+.rail__empty {
+  color: var(--muted);
+  text-align: center;
+  margin: 18px 0;
+}
+
+.rail__lines {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-height: 46vh;
+  overflow-y: auto;
+}
+
+.line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--surface-2);
+}
+
+.line--issue {
+  opacity: 0.7;
+}
+
+.line__name {
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.line__issue {
+  color: var(--danger);
+  font-size: 13px;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.line__right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.line__price {
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--surface-2);
+  border-radius: 999px;
+  padding: 2px;
+}
+
+.step {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: var(--brand);
+  color: #fff;
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.step__value {
+  min-width: 20px;
+  text-align: center;
+  font-weight: 800;
+  font-size: 16px;
+}
+
+.remove {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 16px;
+}
+
+.remove-big {
+  min-height: 44px;
+  padding: 0 14px;
+  font-size: 15px;
+}
+
+.actions {
+  min-height: 48px;
+}
+
+.rail__total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.rail__pay {
+  width: 100%;
+  font-size: 22px;
+}

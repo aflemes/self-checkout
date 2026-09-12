@@ -1,0 +1,46 @@
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand__icon">🛒</span>
+        <span class="brand__name">Snack Bar · Self Checkout</span>
+      </div>
+      <button class="app-button app-button--secondary topbar__help" (click)="support.toggle()">
+        Help
+      </button>
+    </header>
+
+    <main class="layout">
+      @if (menu.loading()) {
+        <div class="state">
+          <span class="spinner"></span>
+          <p>Loading menu…</p>
+        </div>
+      } @else if (menu.error()) {
+        <div class="state">
+          <div class="banner banner--error">{{ menu.error() }}</div>
+          <button class="app-button app-button--primary" (click)="loadMenu()">Try again</button>
+        </div>
+      } @else if (menu.menu()) {
+        <section class="grid-area">
+          <app-menu-grid [menu]="menu.menu()" />
+        </section>
+        <aside class="rail-area">
+          <app-order-rail (pay)="openCheckout()" />
+        </aside>
+      }
+    </main>
+
+    @if (checkoutOpen()) {
+      <app-checkout (confirmed)="onConfirmed($event)" (cancelled)="closeCheckout()" />
+    }
+
+    @if (order()) {
+      <app-confirmation [order]="order()!" (reset)="newPurchase()" />
+    }
+
+    @if (inactivity.warningVisible()) {
+      <app-inactivity (continue)="inactivity.continue()" />
+    }
+
+    @if (support.open()) {
+      <app-help-panel />
+    }

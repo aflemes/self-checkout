@@ -1,0 +1,145 @@
+:root {
+  --bg: #f4f5f7;
+  --surface: #ffffff;
+  --surface-2: #eef0f3;
+  --ink: #1a2233;
+  --muted: #5b6472;
+  --brand: #ff7a00;
+  --brand-dark: #e66400;
+  --brand-ink: #ffffff;
+  --danger: #d32f2f;
+  --danger-bg: #fdecea;
+  --ok: #2e7d32;
+  --warn: #b26a00;
+  --warn-bg: #fff6e5;
+  --radius: 14px;
+  --radius-sm: 10px;
+  --shadow: 0 6px 24px rgba(20, 30, 60, 0.08);
+  --tap: 56px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 18px;
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  border: none;
+  cursor: pointer;
+  background: none;
+  padding: 0;
+}
+
+button:focus-visible,
+a:focus-visible {
+  outline: 3px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.app-button {
+  min-height: var(--tap);
+  border-radius: var(--radius-sm);
+  font-weight: 700;  
+  transition: transform 0.05s ease, background 0.15s ease;
+  user-select: none;
+}
+
+.app-button:active {
+  transform: scale(0.98);
+}
+
+.app-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.app-button--primary {
+  background: var(--brand);
+  color: var(--brand-ink);
+}
+
+.app-button--primary:not(:disabled):hover {
+  background: var(--brand-dark);
+}
+
+.app-button--secondary {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+.app-button--ghost {
+  background: transparent;
+  color: var(--muted);
+}
+
+.app-button--danger {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+.app-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.amount {
+  font-variant-numeric: tabular-nums;
+}
+
+.spinner {
+  width: 34px;
+  height: 34px;
+  border: 4px solid var(--surface-2);
+  border-top-color: var(--brand);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.banner {
+  border-radius: var(--radius-sm);
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 600;
+}
+
+.banner--error {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+.banner--warn {
+  background: var(--warn-bg);
+  color: var(--warn);
+}
+
+.banner__actions {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+}

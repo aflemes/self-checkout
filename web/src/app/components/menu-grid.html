@@ -1,0 +1,52 @@
+    @if (menu()) {
+      <div class="tabs" role="tablist">
+        <button
+          role="tab"
+          [class.active]="selectedCategory() === null"
+          (click)="selectedCategory.set(null)"
+        >
+          All
+        </button>
+        @for (category of menu()!.categories; track category.id) {
+          <button
+            role="tab"
+            [class.active]="selectedCategory() === category.id"
+            (click)="selectedCategory.set(category.id)"
+          >
+            {{ category.name }}
+          </button>
+        }
+      </div>
+
+      <div class="grid">
+        @for (item of items(); track item.id) {
+          <div class="card" [class.card--off]="!item.available">
+            <div class="card__emoji">{{ emoji(item.categoryId) }}</div>
+            <div class="card__name">{{ item.name }}</div>
+            <div class="card__desc">{{ item.description }}</div>
+            <div class="card__bottom">
+              <div class="card__price amount">{{ formatBRL(priceCents(item.id)) }}</div>
+              @if (item.available) {
+                @if (quantity(item.id) > 0) {
+                  <div class="stepper">
+                    <button class="step" aria-label="Remove" (click)="cart.decrement(item.id)">
+                      −
+                    </button>
+                    <span class="step__value">{{ quantity(item.id) }}</span>
+                    <button class="step" aria-label="Add" (click)="cart.add(item.id)">
+                      +
+                    </button>
+                  </div>
+                } @else {
+                  <button class="app-button app-button--primary add" (click)="cart.add(item.id)">
+                    Add
+                  </button>
+                }
+              } @else {
+                <span class="off-badge">Unavailable</span>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }

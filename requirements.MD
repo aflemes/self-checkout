@@ -1,0 +1,614 @@
+# Self-Service Checkout Web Application
+
+## 1. Overview
+
+Build a small self-service checkout web application for a snack bar.
+
+The scenario is simple:
+
+> A customer walks up to a tablet mounted at the counter, browses the menu, builds an order, provides payment information, submits the order, and walks away.
+
+There is no cashier or staff member assisting the customer during the normal flow.
+
+The application consists of:
+
+* A client application built with **Angular**
+* A backend REST API built with **Node.js**
+* A **MySQL** database for persistence
+* **Docker / Docker Compose** for running the application and its dependencies
+
+The goal is not to build a production-grade payment system. The goal is to demonstrate thoughtful decisions around architecture, UX, reliability, error handling, maintainability, and security.
+
+The original challenge intentionally leaves many implementation details open. Where multiple reasonable approaches exist, choose the approach that provides the best balance between simplicity, reliability, and future extensibility, and document the reasoning behind important decisions.
+
+Avoid introducing unnecessary complexity just for the sake of using additional technologies.
+
+---
+
+# 2. Core User Flow
+
+The primary flow should be:
+
+1. Customer opens the application.
+2. The client fetches the menu from the API.
+3. Customer browses the available products.
+4. Customer adds/removes products from the order.
+5. Customer reviews the order and total price.
+6. Customer selects/provides a payment method.
+7. Customer submits the order.
+8. The backend validates and persists the order.
+9. The client displays a clear confirmation to the customer.
+10. The application returns to a clean initial state.
+
+The application should make this flow simple enough that a customer can complete it without assistance.
+
+---
+
+# 3. Frontend
+
+Use **Angular**.
+
+The UI should be designed primarily for a **touchscreen/tablet experience**.
+
+Important UX considerations:
+
+* Large and easy-to-tap controls
+* Clear visual feedback when adding/removing products
+* Persistent visibility of the current order and total
+* Minimal number of steps
+* Clear validation messages
+* Avoid requiring the user to understand technical concepts
+* Clearly communicate when an action is processing
+* Prevent accidental duplicate submissions
+* Provide clear recovery actions when something fails
+* Provide an easily accessible Help option
+* Make the application usable by someone standing at the counter and potentially in a hurry
+
+The interface should prioritize simplicity and clarity over visual complexity.
+
+---
+
+# 4. Backend
+
+Use **Node.js** to build a REST API.
+
+The API should be responsible for:
+
+* Serving the menu
+* Validating orders
+* Calculating/validating totals
+* Validating product availability
+* Accepting orders
+* Persisting orders
+* Returning appropriate responses and errors
+
+The frontend must **not be responsible for determining the authoritative price of an order**.
+
+The client may calculate and display the total for UX purposes, but when an order is submitted the backend must resolve products and prices from the database and calculate the authoritative total.
+
+Never trust prices sent by the client.
+
+For example, the client should submit:
+
+```json
+{
+  "items": [
+    {
+      "productId": "burger-001",
+      "quantity": 2
+    }
+  ]
+}
+```
+
+rather than being trusted to submit:
+
+```json
+{
+  "productId": "burger-001",
+  "quantity": 2,
+  "price": 1.00
+}
+```
+
+---
+
+# 5. Suggested API
+
+The exact API design is left to the implementation, but a reasonable starting point would be:
+
+## Menu
+
+`GET /api/menu`
+
+Returns the currently available products.
+
+Example:
+
+```json
+{
+  "items": [
+    {
+      "id": "burger-001",
+      "name": "Classic Burger",
+      "description": "Beef burger with cheese",
+      "price": 25.90,
+      "available": true
+    }
+  ]
+}
+```
+
+## Create Order
+
+`POST /api/orders`
+
+Example:
+
+```json
+{
+  "idempotencyKey": "550e8400-e29b-41d4-a716-446655440000",
+  "items": [
+    {
+      "productId": "burger-001",
+      "quantity": 2
+    }
+  ],
+  "payment": {
+    "method": "CARD"
+  }
+}
+```
+
+The backend should:
+
+1. Validate the request.
+2. Validate the idempotency key.
+3. Resolve products from the database.
+4. Validate product availability.
+5. Calculate the authoritative order total.
+6. Persist the order.
+7. Return an appropriate response.
+
+The exact response format is left to the implementation.
+
+---
+
+# 6. Idempotency
+
+Order creation must be designed to prevent accidental duplicate orders.
+
+This is particularly important in a self-service environment.
+
+Consider the following scenario:
+
+```text
+Customer
+
+   │
+   │ POST /orders
+   ▼
+Backend
+
+   │
+   ├── persists order successfully
+   │
+   └── response is lost because of a network problem
+   X
+
+Customer does not receive response
+
+   │
+   └── presses "Pay" again
+```
+
+The second request must not create a second order.
+
+Use an **idempotency key** generated by the client for each checkout attempt.
+
+For example:
+
+```json
+{
+  "idempotencyKey": "uuid",
+  "items": [...]
+}
+```
+
+The backend should ensure that the same idempotency key cannot create multiple orders.
+
+A database-level unique constraint should be used where appropriate rather than relying only on application-level checks.
+
+If the same idempotency key is submitted again, the API should return the existing order/result rather than creating a duplicate.
+
+Document the chosen idempotency strategy.
+
+---
+
+# 7. Database
+
+Use **MySQL**.
+
+The database should contain at least:
+
+* Products/menu items
+* Orders
+* Order items
+* Payment information/status
+
+The schema should preserve the price of each product at the time the order was created.
+
+For example:
+
+If a product costs `$10` when an order is created and its menu price changes to `$12` later, the existing order must still contain the original `$10` price.
+
+Use database migrations to:
+
+1. Create the schema.
+2. Create appropriate indexes and constraints.
+3. Seed the initial menu.
+
+The application should be able to start from an empty database and initialize itself through the migration/seed process.
+
+---
+
+# 8. Client-Side Persistence
+
+Because the application runs on a shared self-service tablet, customers may:
+
+* Accidentally refresh the page
+* Navigate away and return
+* Start an order and reconsider
+* Leave the screen without completing the order
+
+The frontend should therefore persist the **in-progress order** in `localStorage`.
+
+The local state should contain only what is necessary to restore the current cart.
+
+For example:
+
+```json
+{
+  "items": [
+    {
+      "productId": "burger-001",
+      "quantity": 2
+    }
+  ]
+}
+```
+
+Do **not** store sensitive payment information in localStorage.
+
+Do not treat localStorage as the source of truth for prices or product availability.
+
+When restoring an order from localStorage, the application should reconcile the stored product IDs against the current menu received from the API.
+
+If a previously selected product no longer exists or is no longer available, the UI should clearly communicate this and allow the customer to adjust the order.
+
+---
+
+# 9. Inactivity and Abandoned Sessions
+
+The application should automatically clear abandoned checkout sessions.
+
+The inactivity timeout must be configurable through environment variables.
+
+For example:
+
+```env
+INACTIVITY_TIMEOUT_SECONDS=120
+INACTIVITY_WARNING_SECONDS=15
+```
+
+The implementation should distinguish between:
+
+* The amount of time before showing the warning
+* The countdown duration of the warning
+
+For example:
+
+```text
+Customer stops interacting
+        │
+        │ 105 seconds
+        ▼
+
+┌─────────────────────────────┐
+│ Are you still there?        │
+│                             │
+│ Your order will be cleared  │
+│ in 15 seconds.              │
+│                             │
+│            14               │
+│                             │
+│ [Continue Order]            │
+└─────────────────────────────┘
+```
+
+When the warning countdown reaches zero:
+
+1. Clear the current order.
+2. Clear the related localStorage state.
+3. Close temporary UI state such as the Help panel.
+4. Return the application to its initial state.
+5. Refresh/reinitialize the menu if necessary.
+
+Any meaningful customer interaction during the warning period should cancel the reset and continue the session.
+
+The inactivity mechanism must not clear an order while the customer is actively interacting with the application.
+
+---
+
+# 10. Error Handling
+
+Assume that users will encounter unexpected situations.
+
+The application should gracefully handle cases such as:
+
+* API unavailable
+* Menu cannot be loaded
+* Product becomes unavailable
+* Invalid order
+* Order submission failure
+* Database failure
+* Network interruption
+* User accidentally refreshes the page
+* Duplicate submit attempts
+* Timeout during checkout
+
+Errors should be communicated using **human-readable messages**.
+
+Never expose:
+
+* Stack traces
+* SQL errors
+* Internal service names
+* Infrastructure details
+* Sensitive information
+
+Whenever possible, provide an obvious recovery action, such as:
+
+* Retry
+* Return to menu
+* Cancel order
+* Start over
+
+The application should distinguish between:
+
+```text
+Request failed before an order was created
+```
+
+and:
+
+```text
+Order was created successfully, but the response was lost
+```
+
+The second scenario should not result in a duplicate order if the customer retries.
+
+---
+
+# 11. Help
+
+Because there is no cashier, provide a visible **Help** option.
+
+For now, this does not need to connect to a real person or AI.
+
+Clicking Help should open a small chat-like panel at the bottom of the screen that mocks a support conversation.
+
+Example:
+
+```text
+┌─────────────────────────────┐
+│ Help                    ×   │
+├─────────────────────────────┤
+│ Hi! How can we help?        │
+│                             │
+│ [I can't submit my order]   │
+│ [I need help with payment]  │
+│ [Something else]            │
+└─────────────────────────────┘
+```
+
+The implementation should keep the Help functionality sufficiently isolated so that it could later be replaced with:
+
+* An AI support agent
+* A live human support agent
+* A combination of automated and human support
+
+without requiring major changes to the checkout domain.
+
+---
+
+# 12. Security
+
+Even though this is a small application, follow reasonable backend security principles.
+
+In particular:
+
+* Never trust prices received from the client.
+* Validate all incoming requests.
+* Validate product IDs and quantities.
+* Prevent duplicate order creation.
+* Use database constraints where appropriate.
+* Do not store sensitive payment information.
+* Do not expose internal errors to the client.
+* Use environment variables for configuration and secrets.
+* Do not hardcode database credentials.
+* Use appropriate database constraints and indexes.
+
+---
+
+# 13. Observability
+
+Add basic structured logging around important operations, especially:
+
+* Order creation
+* Idempotency conflicts/replays
+* Validation failures
+* Order submission failures
+
+Logs should contain enough context to troubleshoot an order without exposing sensitive information.
+
+Where appropriate, include identifiers such as:
+
+* Order ID
+* Idempotency key
+
+Do not log sensitive payment information.
+
+---
+
+# 14. Docker
+
+The complete application should run using Docker.
+
+Provide a `docker-compose.yml` or equivalent configuration capable of starting:
+
+* Angular frontend
+* Node.js API
+* MySQL
+
+Configuration such as:
+
+* Ports
+* Database credentials
+* Inactivity timeout
+* Other environment-specific settings
+
+should be configurable through environment variables.
+
+The README must explain how to start the entire application from a clean environment.
+
+Ideally, a developer should be able to clone the repository and run the application with a small number of commands.
+
+---
+
+# 15. Initial Data
+
+Provide a database migration/seed process containing a small initial menu.
+
+For example:
+
+* Burgers
+* Sandwiches
+* Fries
+* Soft drinks
+* Desserts
+
+The exact menu and data model are implementation decisions.
+
+The seed should provide enough products to demonstrate:
+
+* Product browsing
+* Categories
+* Adding/removing products
+* Quantity changes
+* Order totals
+* Product availability
+
+---
+
+# 16. Architecture Principles
+
+The implementation should favor:
+
+* Simple, maintainable code
+* Clear separation of responsibilities
+* Explicit domain models
+* Backend as the source of truth for products and prices
+* Idempotent order creation
+* Good touchscreen UX
+* Easy local development
+* Easy future extension
+
+Avoid unnecessary abstractions and infrastructure.
+
+The application is intentionally small.
+
+Prefer a simple solution that can evolve over an unnecessarily complex architecture.
+
+---
+
+# 17. Deliverables
+
+The final project should include:
+
+* Angular frontend
+* Node.js backend
+* MySQL database
+* Database migrations
+* Initial seed data
+* Docker/Docker Compose configuration
+* Environment configuration
+* README
+
+The README should contain:
+
+### Architecture
+
+Explain the main components and how they communicate.
+
+### Running locally
+
+Explain how to start the complete application from a clean environment.
+
+### Database
+
+Explain how migrations and seed data are executed.
+
+### API
+
+Document the main API endpoints.
+
+### Design decisions
+
+Explain important architectural decisions, particularly:
+
+* Why MySQL was chosen
+* How idempotency is implemented
+* How localStorage is used
+* How abandoned sessions are handled
+* How order prices are validated
+* How failures are handled
+
+### Known limitations
+
+Clearly document what is intentionally simplified.
+
+### Future improvements
+
+Mention reasonable future extensions, such as:
+
+* Real payment provider
+* Real-time kitchen integration
+* Order status tracking
+* AI/human support
+* Authentication/admin interface
+* Metrics and tracing
+
+---
+
+# 18. Final Requirement
+
+The original challenge intentionally leaves many decisions open.
+
+Do not blindly implement every suggestion in this document if another approach is technically superior.
+
+Use engineering judgment.
+
+Where there are multiple reasonable solutions, select one, implement it cleanly, and document the trade-offs.
+
+The quality of the solution should be evaluated not only by whether the application works, but also by:
+
+* Architecture
+* Reliability
+* UX
+* Error handling
+* Maintainability
+* Security
+* Reasoning behind technical decisions
+
+The final implementation should feel like a **small but thoughtfully engineered self-service checkout system**, rather than a collection of technologies added solely to satisfy a checklist.

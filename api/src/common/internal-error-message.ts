@@ -1,0 +1,1 @@
+export const internalErrorMessage = 'Something went wrong. Please try again.';

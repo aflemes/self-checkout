@@ -1,0 +1,41 @@
+    <div class="overlay">
+      <div class="card app-card">
+        <button class="card__close" aria-label="Close" (click)="reset.emit()">✕</button>
+        <div class="card__check">✅</div>
+        <h1 class="card__title">Order confirmed!</h1>
+
+        @if (order().replayed) {
+          <p class="card__note">This order had already been confirmed earlier. We did not create a duplicate.</p>
+        }
+
+        <div class="card__info">
+          <div class="card__row">
+            <span>Order number</span>
+            <strong>#{{ order().orderId }}</strong>
+          </div>
+          <div class="card__row">
+            <span>Total</span>
+            <strong>{{ formatBRL(Math.round(order().total * 100)) }}</strong>
+          </div>
+          <div class="card__row">
+            <span>Payment</span>
+            <strong>{{ order().paymentMethod === 'CARD' ? 'Card' : 'Pix' }}</strong>
+          </div>
+        </div>
+
+        <div class="card__items">
+          @for (line of order().items; track line.productId) {
+            <div class="card__item">
+              <span>{{ line.quantity }}× {{ line.name }}</span>
+              <span>{{ formatBRL(Math.round(line.unitPrice * 100) * line.quantity) }}</span>
+            </div>
+          }
+        </div>
+
+        <p class="card__hint">Your order will be prepared soon. Thank you!</p>
+
+        <button class="app-button app-button--primary card__reset" (click)="reset.emit()">
+          New purchase
+        </button>
+      </div>
+    </div>

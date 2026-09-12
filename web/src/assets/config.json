@@ -1,0 +1,4 @@
+{
+  "inactivityTimeoutSeconds": 120,
+  "inactivityWarningSeconds": 15
+}

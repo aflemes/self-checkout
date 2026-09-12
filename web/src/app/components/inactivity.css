@@ -1,0 +1,53 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 16, 30, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 60;
+}
+
+.dialog {
+  width: 100%;
+  max-width: 420px;
+  padding: 32px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.dialog__hand {
+  font-size: 56px;
+}
+
+.dialog__title {
+  margin: 0;
+  font-size: 26px;
+}
+
+.dialog__text {
+  color: var(--muted);
+  margin: 0;
+  font-size: 18px;
+}
+
+.dialog__count {
+  display: inline-block;
+  background: var(--warn-bg);
+  color: var(--warn);
+  border-radius: 10px;
+  padding: 0 10px;
+  font-weight: 800;
+  font-size: 24px;
+  margin: 0 2px;
+}
+
+.dialog__continue {
+  width: 100%;
+  font-size: 20px;
+  min-height: 60px;
+}
