@@ -143,7 +143,7 @@ Errors are returned as `{ "statusCode": <code>, "message": "<human-readable pt-B
 | Product is unavailable | `409` |
 | Anything internal | `500` (generic message, no stack traces or SQL) |
 
-`payment.method` accepts `CARD` or `PIX`; both are simulated (no real payment processing).
+`payment.method` accepts `CARD` and uses Stripe in test mode: the API creates a PaymentIntent, the customer pays with a test card via Stripe.js, and the webhook marks the order `PAID`.
 
 ## Design decisions
 
@@ -159,7 +159,7 @@ Errors are returned as `{ "statusCode": <code>, "message": "<human-readable pt-B
 
 ## Known limitations
 
-- Payment is simulated: `CARD`/`PIX` are recorded but no gateway is contacted.
+- Payment runs through Stripe in test mode (`sk_test_...`): no real money is charged, and test cards must be used.
 - No stock/limits: quantities are only bounded client-side (≤ 99) and by validation.
 - Single tablet, one checkout at a time; no concurrent-order locking concerns.
 - No admin UI or order management endpoints.
@@ -167,7 +167,7 @@ Errors are returned as `{ "statusCode": <code>, "message": "<human-readable pt-B
 
 ## Future improvements
 
-- Real payment provider integration (tokenized card, PIX QR code) with payment webhooks and status transitions.
+- Production Stripe keys (`sk_live_...`) so real cards can be charged.
 - Real-time kitchen display / order status tracking.
 - AI or human support backend behind the existing `SupportService` interface.
 - Admin interface for product/price/availability management.

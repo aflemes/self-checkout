@@ -9,7 +9,7 @@ import { CartService } from '../../core/cart.service';
 import { ConfigService } from '../../core/config.service';
 import { OrdersService } from '../../core/orders.service';
 import { friendlyHttpError, formatBRL } from '../../core/format';
-import { OrderResult, PaymentMethod } from '../../models/order';
+import { OrderResult } from '../../models/order';
 
 @Component({
   selector: 'app-checkout',
@@ -25,7 +25,6 @@ export class CheckoutComponent {
   readonly confirmed = output<OrderResult>();
   readonly cancelled = output<void>();
 
-  readonly method = signal<PaymentMethod>('CARD');
   readonly submitting = signal(false);
   readonly error = signal<string | null>(null);
 
@@ -56,7 +55,7 @@ export class CheckoutComponent {
       const result = await this.orders.create({
         idempotencyKey: this.attemptKey,
         items: this.cart.submitLines(),
-        payment: { method: this.method() },
+        payment: { method: 'CARD' },
       });
       this.orderRef = result;
       if (result.status === 'PAID') {

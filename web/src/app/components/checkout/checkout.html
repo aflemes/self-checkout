@@ -30,13 +30,10 @@
       </div>
 
       <div class="pay-methods">
-        <button
-          class="pay-method pay-method--active"
-          (click)="method.set('CARD')"
-        >
+        <div class="pay-method pay-method--active">
           <span class="pay-method__icon">💳</span>
           <span>Card</span>
-        </button>
+        </div>
       </div>
 
       @if (error()) {

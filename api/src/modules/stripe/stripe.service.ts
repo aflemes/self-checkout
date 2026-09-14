@@ -23,10 +23,6 @@ export class StripeService {
     }
   }
 
-  get enabled(): boolean {
-    return this.client !== null;
-  }
-
   async createPaymentIntent(params: {
     amountCents: number;
     orderId: string;

@@ -8,8 +8,8 @@ export interface SupportMessage {
 export type SupportTopic = 'order' | 'payment' | 'other';
 
 const replies: Record<SupportTopic, string> = {
-  order: 'It looks like your order could not be confirmed. Tap "Try again"; if the order was already confirmed, the confirmation screen will appear.',
-  payment: 'You can pay with card or Pix. Choose the option in the payment step and tap "Confirm". We never store card details.',
+  order: 'Your order could not be confirmed. Tap "Confirm order" to try again; if the order was already confirmed, the confirmation screen will appear and no duplicate will be created.',
+  payment: "You pay with your credit or debit card on the secure Stripe screen. Review the order, tap \"Confirm order\", then \"Pay now\" on the payment step and enter your card details. We never store card details.",
   other: "We're here to help! Ask the snack bar staff for assistance if you need more support.",
 };
 

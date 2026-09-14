@@ -22,7 +22,7 @@ export class Order {
   })
   status: string;
 
-  @Column({ name: 'payment_method', type: 'enum', enum: ['CARD', 'PIX'] })
+  @Column({ name: 'payment_method', type: 'enum', enum: ['CARD'] })
   paymentMethod: string;
 
   @Column({
