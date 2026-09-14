@@ -157,25 +157,3 @@ Returns the current order status, used by the checkout dialog to poll for webhoo
 
 `payment.method` accepts `CARD`. All payment flows run through Stripe in test mode with USD amounts: the API creates a PaymentIntent, the customer pays with a test card via Stripe.js, and the webhook marks the order `PAID`.
 
-## Design decisions
-
-- **Why MySQL.** The challenge specified it, and its strong transactional guarantees (InnoDB, `UNIQUE` constraints, proper decimal types) are exactly what idempotent order creation and authoritative money math need.
-- **Idempotency.** Two layers: a database-level `UNIQUE(idempotency_key)` and application logic. On submit, the service reads an existing order by key (fast-path replay), otherwise inserts inside a transaction; if a concurrent insert hits the unique constraint (`ER_DUP_ENTRY`), it rolls back and re-reads the winning order. A lost response plus a customer retry therefore can never create a second order.
-- **Authoritative prices.** The menu endpoint is the only source of prices. Order totals are computed server-side from database rows using integer cents; the client only mirrors totals for display. Client-sent `price` fields are dropped by strict DTO validation (`whitelist: true`).
-- **Price snapshots.** `order_items` stores `product_name`/`unit_price` copied at creation time, satisfying the requirement that later price changes do not rewrite history.
-- **Currency.** Amounts are handled and displayed in USD end to end: the Stripe PaymentIntent is created in `usd`, and the frontend formats cents with `Intl.NumberFormat('en-US', { currency: 'USD' })`.
-- **Stripe locale.** The Payment Element is created with `locale: 'en'`, so the payment form renders in English regardless of the browser/tablet language.
-- **localStorage.** The cart persists only `{ items: [{ productId, quantity }] }` — no prices, no payment data. On load the app reconciles stored IDs against the live menu: removed products are flagged "not available anymore" and unavailable ones "temporarily unavailable"; affected lines stay visible but block checkout until removed or adjusted.
-- **Abandoned sessions.** A client-side timer resets on meaningful interaction (tap/move/keystroke). After `INACTIVITY_TIMEOUT_SECONDS` an overlay counts down `INACTIVITY_WARNING_SECONDS`; any interaction cancels it, and hitting zero clears the cart, localStorage, and Help panel and reloads the menu. The two timeouts are configurable via env vars.
-- **Failure handling.** A global exception filter converts every error into a friendly English message and never leaks internals. The checkout dialog distinguishes a failed submit from a lost response by reusing the same idempotency key: retrying either shows the created order (via replay) or a real error, never a duplicate.
-- **Help.** A self-contained `SupportService` owns the mock chat. Swapping it for a real AI/human agent later only changes that service; the checkout domain is untouched.
-- **Observability.** NestJS logging records order creation, replays, validation failures, and submission errors with `orderId`/`idempotencyKey` context; payment details are never logged.
-
-## Known limitations
-
-- Payment runs through Stripe in test mode (`sk_test_...`): no real money is charged, and test cards must be used.
-- The app is served over plain HTTP, so the browser disables card autofill and shows its "not a secure connection" notice in the payment form. This is a browser security rule outside the app's control and only disappears with HTTPS.
-- No stock/limits: quantities are only bounded client-side (≤ 99) and by validation.
-- Single tablet, one checkout at a time; no concurrent-order locking concerns.
-- No admin UI or order management endpoints.
-- SQL migrations are raw `*.sql` files applied by a small custom runner rather than an ORM migration framework.
