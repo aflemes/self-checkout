@@ -40,10 +40,16 @@ All settings live in `.env` (see `.env.example`):
 | `MYSQL_USER` / `MYSQL_PASSWORD` | `checkout` / `checkout` | Application DB account |
 | `MYSQL_ROOT_PASSWORD` | `root` | Root account (used only by MySQL init) |
 | `API_PORT` / `API_HOST` | `3000` / `0.0.0.0` | API bind |
+| `CORS_ORIGIN` | `http://localhost:8088` | Allowed frontend origin |
+| `STRIPE_SECRET_KEY` | — | Stripe secret key (test mode: `sk_test_...`) |
+| `STRIPE_PUBLISHABLE_KEY` | — | Stripe publishable key (test mode: `pk_test_...`) |
+| `STRIPE_WEBHOOK_SECRET` | — | Stripe webhook signing secret (`whsec_...`) |
 | `INACTIVITY_TIMEOUT_SECONDS` | `120` | Idle time before the "Are you still there?" warning |
 | `INACTIVITY_WARNING_SECONDS` | `15` | Countdown shown in the warning before the order is cleared |
 
-The inactivity values are injected into the web container at boot as `assets/config.json`.
+The inactivity values and the Stripe publishable key are injected into the web container at boot as `assets/config.json`.
+
+For local Stripe webhook setup, run `scripts/stripe-listen.sh`, which forwards events to the API and captures the `whsec_...` secret automatically.
 
 ### Development without Docker
 
@@ -60,7 +66,8 @@ database/
 ├── migrate.js              Node runner (no framework)
 ├── migrations/
 │   ├── 001_create_catalog.sql
-│   └── 002_create_orders.sql
+│   ├── 002_create_orders.sql
+│   └── 003_stripe_payments.sql
 └── seeds/
     └── 001_seed_menu.sql
 ```
@@ -70,7 +77,8 @@ The runner creates the database if needed, tracks applied files in a `schema_mig
 Schema highlights:
 
 - `products.price` is `DECIMAL(10,2)`.
-- `orders` has a `UNIQUE(idempotency_key)` constraint (the backbone of idempotency) plus status and totals.
+- `orders` has a `UNIQUE(idempotency_key)` constraint (the backbone of idempotency), a status enum (`PENDING`/`PAID`/`CANCELLED`/`FAILED`/`EXPIRED`), and totals.
+- `orders.stripe_intent_id` is `UNIQUE`, tying each order to its Stripe PaymentIntent.
 - `order_items` snapshots `product_name` and `unit_price` at order time, so later menu price changes never affect existing orders.
 - Foreign keys and indexes cover category lookup and order-item integrity.
 
@@ -121,20 +129,21 @@ Response (new order):
 ```json
 {
   "orderId": "1",
-  "status": "PAID",
+  "status": "PENDING",
   "paymentMethod": "CARD",
   "total": 25.8,
   "createdAt": "2026-09-11T12:22:35.000Z",
   "items": [
     { "productId": "hotdog-001", "name": "Classic Hot Dog", "quantity": 2, "unitPrice": 12.9 }
   ],
-  "replayed": false
+  "replayed": false,
+  "clientSecret": "pi_1..._secret_..."
 }
 ```
 
 Replaying the same `idempotencyKey` returns the original order with `"replayed": true` instead of creating a new one.
 
-Errors are returned as `{ "statusCode": <code>, "message": "<human-readable pt-BR text>" }`:
+Errors are returned as `{ "statusCode": <code>, "message": "<human-readable text>" }`:
 
 | Case | Status |
 | --- | --- |
@@ -143,7 +152,11 @@ Errors are returned as `{ "statusCode": <code>, "message": "<human-readable pt-B
 | Product is unavailable | `409` |
 | Anything internal | `500` (generic message, no stack traces or SQL) |
 
-`payment.method` accepts `CARD` and uses Stripe in test mode: the API creates a PaymentIntent, the customer pays with a test card via Stripe.js, and the webhook marks the order `PAID`.
+### `GET /api/orders/:id/status`
+
+Returns the current order status, used by the checkout dialog to poll for webhook confirmation.
+
+`payment.method` accepts `CARD`. All payment flows run through Stripe in test mode with USD amounts: the API creates a PaymentIntent, the customer pays with a test card via Stripe.js, and the webhook marks the order `PAID`.
 
 ## Design decisions
 
@@ -151,24 +164,19 @@ Errors are returned as `{ "statusCode": <code>, "message": "<human-readable pt-B
 - **Idempotency.** Two layers: a database-level `UNIQUE(idempotency_key)` and application logic. On submit, the service reads an existing order by key (fast-path replay), otherwise inserts inside a transaction; if a concurrent insert hits the unique constraint (`ER_DUP_ENTRY`), it rolls back and re-reads the winning order. A lost response plus a customer retry therefore can never create a second order.
 - **Authoritative prices.** The menu endpoint is the only source of prices. Order totals are computed server-side from database rows using integer cents; the client only mirrors totals for display. Client-sent `price` fields are dropped by strict DTO validation (`whitelist: true`).
 - **Price snapshots.** `order_items` stores `product_name`/`unit_price` copied at creation time, satisfying the requirement that later price changes do not rewrite history.
+- **Currency.** Amounts are handled and displayed in USD end to end: the Stripe PaymentIntent is created in `usd`, and the frontend formats cents with `Intl.NumberFormat('en-US', { currency: 'USD' })`.
+- **Stripe locale.** The Payment Element is created with `locale: 'en'`, so the payment form renders in English regardless of the browser/tablet language.
 - **localStorage.** The cart persists only `{ items: [{ productId, quantity }] }` — no prices, no payment data. On load the app reconciles stored IDs against the live menu: removed products are flagged "not available anymore" and unavailable ones "temporarily unavailable"; affected lines stay visible but block checkout until removed or adjusted.
 - **Abandoned sessions.** A client-side timer resets on meaningful interaction (tap/move/keystroke). After `INACTIVITY_TIMEOUT_SECONDS` an overlay counts down `INACTIVITY_WARNING_SECONDS`; any interaction cancels it, and hitting zero clears the cart, localStorage, and Help panel and reloads the menu. The two timeouts are configurable via env vars.
-- **Failure handling.** A global exception filter converts every error into a friendly pt-BR message and never leaks internals. The checkout dialog distinguishes a failed submit from a lost response by reusing the same idempotency key: retrying either shows the created order (via replay) or a real error, never a duplicate.
+- **Failure handling.** A global exception filter converts every error into a friendly English message and never leaks internals. The checkout dialog distinguishes a failed submit from a lost response by reusing the same idempotency key: retrying either shows the created order (via replay) or a real error, never a duplicate.
 - **Help.** A self-contained `SupportService` owns the mock chat. Swapping it for a real AI/human agent later only changes that service; the checkout domain is untouched.
 - **Observability.** NestJS logging records order creation, replays, validation failures, and submission errors with `orderId`/`idempotencyKey` context; payment details are never logged.
 
 ## Known limitations
 
 - Payment runs through Stripe in test mode (`sk_test_...`): no real money is charged, and test cards must be used.
+- The app is served over plain HTTP, so the browser disables card autofill and shows its "not a secure connection" notice in the payment form. This is a browser security rule outside the app's control and only disappears with HTTPS.
 - No stock/limits: quantities are only bounded client-side (≤ 99) and by validation.
 - Single tablet, one checkout at a time; no concurrent-order locking concerns.
 - No admin UI or order management endpoints.
 - SQL migrations are raw `*.sql` files applied by a small custom runner rather than an ORM migration framework.
-
-## Future improvements
-
-- Production Stripe keys (`sk_live_...`) so real cards can be charged.
-- Real-time kitchen display / order status tracking.
-- AI or human support backend behind the existing `SupportService` interface.
-- Admin interface for product/price/availability management.
-- Metrics and tracing (prometheus/OpenTelemetry) alongside the existing structured logs.
