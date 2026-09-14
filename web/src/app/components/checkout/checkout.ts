@@ -8,7 +8,7 @@ import {
 import { CartService } from '../../core/cart.service';
 import { ConfigService } from '../../core/config.service';
 import { OrdersService } from '../../core/orders.service';
-import { friendlyHttpError, formatBRL } from '../../core/format';
+import { friendlyHttpError, formatUSD } from '../../core/format';
 import { OrderResult } from '../../models/order';
 
 @Component({
@@ -171,7 +171,10 @@ export class CheckoutComponent {
       return;
     }
     this.unmountPayment();
-    this.elements = this.stripe.elements({ clientSecret: this.orderRef.clientSecret });
+    this.elements = this.stripe.elements({
+      clientSecret: this.orderRef.clientSecret,
+      locale: 'en',
+    });
     this.paymentElement = this.elements.create('payment');
     this.paymentElement.mount(host);
   }
@@ -220,5 +223,5 @@ export class CheckoutComponent {
     return `manual-${Date.now()}-${Math.random().toString(16).slice(2)}`;
   }
 
-  formatBRL = formatBRL;
+  formatUSD = formatUSD;
 }

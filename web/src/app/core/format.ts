@@ -1,9 +1,9 @@
 import { HttpErrorResponse } from '@angular/common/http';
 
-const brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+const usd = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
 
-export function formatBRL(cents: number): string {
-  return brl.format(cents / 100);
+export function formatUSD(cents: number): string {
+  return usd.format(cents / 100);
 }
 
 export function friendlyHttpError(err: unknown, fallback: string): string {

@@ -15,7 +15,7 @@
           </div>
           <div class="card__row">
             <span>Total</span>
-            <strong>{{ formatBRL(Math.round(order().total * 100)) }}</strong>
+            <strong>{{ formatUSD(Math.round(order().total * 100)) }}</strong>
           </div>
           <div class="card__row">
             <span>Payment</span>
@@ -27,7 +27,7 @@
           @for (line of order().items; track line.productId) {
             <div class="card__item">
               <span>{{ line.quantity }}× {{ line.name }}</span>
-              <span>{{ formatBRL(Math.round(line.unitPrice * 100) * line.quantity) }}</span>
+              <span>{{ formatUSD(Math.round(line.unitPrice * 100) * line.quantity) }}</span>
             </div>
           }
         </div>

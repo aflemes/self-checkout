@@ -18,7 +18,7 @@
             <span class="dialog__qty">{{ line.quantity }}×</span>
             <span class="dialog__name">{{ line.product?.name }}</span>
             <span class="dialog__amount amount">
-              {{ formatBRL(unitCents(line.product) * line.quantity) }}
+              {{ formatUSD(unitCents(line.product) * line.quantity) }}
             </span>
           </div>
         }
@@ -26,7 +26,7 @@
 
       <div class="dialog__total">
         <span>Total</span>
-        <span class="amount">{{ formatBRL(cart.totalCents()) }}</span>
+        <span class="amount">{{ formatUSD(cart.totalCents()) }}</span>
       </div>
 
       <div class="pay-methods">
@@ -66,7 +66,7 @@
 
       <div class="dialog__total">
         <span>Total</span>
-        <span class="amount">{{ formatBRL(cart.totalCents()) }}</span>
+        <span class="amount">{{ formatUSD(cart.totalCents()) }}</span>
       </div>
 
       <div #stripeMount class="stripe-mount"></div>

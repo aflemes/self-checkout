@@ -18,7 +18,7 @@ export class StripeService {
     this.webhookSecret = secret && secret.startsWith('whsec_') ? secret : null;
     if (!this.client || !this.webhookSecret) {
       this.logger.warn(
-        'STRIPE_SECRET_KEY/STRIPE_WEBHOOK_SECRET nao configuradas; pagamentos desativados, pedidos ficarao PENDING',
+        'STRIPE_SECRET_KEY/STRIPE_WEBHOOK_SECRET not configured; payments disabled, orders will stay PENDING',
       );
     }
   }
@@ -34,14 +34,14 @@ export class StripeService {
     const intent = await this.client.paymentIntents.create(
       {
         amount: params.amountCents,
-        currency: 'brl',
+        currency: 'usd',
         payment_method_types: ['card'],
         metadata: { orderId: params.orderId },
       },
       { idempotencyKey: params.idempotencyKey },
     );
     if (!intent.client_secret) {
-      this.logger.error(`PaymentIntent sem client_secret intentId=${intent.id}`);
+      this.logger.error(`PaymentIntent missing client_secret intentId=${intent.id}`);
       return null;
     }
     return { id: intent.id, clientSecret: intent.client_secret };
@@ -57,7 +57,7 @@ export class StripeService {
 
   constructEvent(payload: string | Buffer, signature: string): Stripe.Event {
     if (!this.client || !this.webhookSecret) {
-      throw new Error('Stripe nao configurado');
+      throw new Error('Stripe not configured');
     }
     return this.client.webhooks.constructEvent(payload, signature, this.webhookSecret);
   }

@@ -25,7 +25,7 @@
         <div class="card__name">{{ item.name }}</div>
         <div class="card__desc">{{ item.description }}</div>
         <div class="card__bottom">
-          <div class="card__price amount">{{ formatBRL(priceCents(item.id)) }}</div>
+          <div class="card__price amount">{{ formatUSD(priceCents(item.id)) }}</div>
           @if (item.available) {
             @if (quantity(item.id) > 0) {
               <div class="stepper">

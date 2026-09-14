@@ -1,6 +1,6 @@
 import { Component, computed, inject, output } from '@angular/core';
 import { CartService } from '../../core/cart.service';
-import { formatBRL } from '../../core/format';
+import { formatUSD } from '../../core/format';
 
 @Component({
   selector: 'app-order-rail',
@@ -16,5 +16,5 @@ export class OrderRailComponent {
     return product ? Math.round(product.price * 100) : 0;
   }
 
-  formatBRL = formatBRL;
+  formatUSD = formatUSD;
 }
