@@ -22,7 +22,7 @@ The frontend is a single page with three states (browse → checkout dialog → 
 Requirements: Docker with Compose v2.
 Place the .env file on the root of the project and then run
 ```bash
-docker compose up --d
+docker compose up -d
 ```
 
 Then open <http://localhost:8088>.
