@@ -8,7 +8,7 @@ Three components run via Docker Compose:
 
 ```
 web (Angular + Nginx)  ── /api/* proxy ──▶  api (NestJS)  ──▶  mysql (8.4)
-     128.0.0.1:8088                        localhost:3000
+     localhost:8088                        localhost:3000
 ```
 
 - **web** — Angular 22 standalone components served by Nginx. The browser only ever talks to `/api/*` on the same origin; Nginx proxies those requests to the API container, so there are no cross-domain requests from the tablet.
