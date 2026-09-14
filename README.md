@@ -20,10 +20,9 @@ The frontend is a single page with three states (browse → checkout dialog → 
 ## Running locally
 
 Requirements: Docker with Compose v2.
-
+Place the .env file on the root of the project and then run
 ```bash
-cp .env.example .env
-docker compose up --build
+docker compose up --d
 ```
 
 Then open <http://localhost:8088>.
